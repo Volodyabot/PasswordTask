@@ -1,74 +1,66 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Output } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { PasswordService } from '../services/password.service';
 
 @Component({
   selector: 'app-password',
   templateUrl: './password.component.html',
   styleUrls: ['./password.component.scss']
 })
-export class PasswordComponent {
+export class PasswordComponent implements OnInit {
 
-  password: string = '';
+  firstSectionColor = "gray";
+  secondSectionColor = "gray";
+  thirdSectionColor = "gray";
 
-  firstSectionClass = "gray";
-  secondSectionClass = "gray";
-  thirdSectionClass = "gray";
+  public passwordForm!: FormGroup;
+
+  constructor(private passwordService: PasswordService) { }
+
+  ngOnInit(): void {
+    this.initForm()
+  }
+
+  initForm() {
+    this.passwordForm = new FormGroup({
+      'password': new FormControl('', [Validators.minLength(8), Validators.required])
+    });
+  }
 
   onChange() {
-    this.setSectionClass();
+    this.firstSectionColor = this.setSectionColor(1);
+    this.secondSectionColor = this.setSectionColor(2);
+    this.thirdSectionColor = this.setSectionColor(3);
   }
 
-  checkPasswordStrength(password: string) {
-    const hasLetters = password.match(/[a-zA-Z]/);
-    const hasDigits = password.match(/\d/);
-    const hasSymbols = password.match(/[!@#$%^&*()_+{}\[\]:;<>,.?~\\-]/);
+  setSectionColor(sectionNumber: number) {
+    const passwordStatus = this.passwordService.checkPasswordStrength(this.passwordForm.value.password);
 
-    if (password.length === 0) {
-      return 'empty';
-    } else if (password.length > 0 && password.length < 8) {
-      return 'invalid';
-    } else if (hasLetters && hasDigits && hasSymbols) {
-      return 'strong';
-    } else if (hasLetters && hasDigits || hasLetters && hasSymbols || hasDigits && hasSymbols) {
-      return 'medium';
-    } else {
-      return 'weak';
-    }
-  }
+    const colorScheme: { [key: string]: { [key: string]: string } } = {
+      '1': {
+        'empty': 'gray',
+        'invalid': 'red',
+        'weak': 'red',
+        'medium': 'orange',
+        'strong': 'green'
+      },
+      '2': {
+        'empty': 'gray',
+        'invalid': 'red',
+        'weak': 'gray',
+        'medium': 'orange',
+        'strong': 'green'
+      },
+      '3': {
+        'empty': 'gray',
+        'invalid': 'red',
+        'weak': 'gray',
+        'medium': 'gray',
+        'strong': 'green'
+      },
 
-  setSectionClass() {
-    const passwrdStatus = this.checkPasswordStrength(this.password);
+    };
 
-    switch (passwrdStatus) {
-      case 'empty': {
-        this.firstSectionClass = "gray";
-        this.secondSectionClass = "gray";
-        this.thirdSectionClass = "gray";
-        break;
-      }
-      case 'invalid': {
-        this.firstSectionClass = "red";
-        this.secondSectionClass = "red";
-        this.thirdSectionClass = "red";
-        break;
-      }
-      case 'weak': {
-        this.firstSectionClass = "red";
-        this.secondSectionClass = "gray";
-        this.thirdSectionClass = "gray";
-        break;
-      }
-      case 'medium': {
-        this.firstSectionClass = "yellow";
-        this.secondSectionClass = "yellow";
-        this.thirdSectionClass = "gray";
-        break;
-      }
-      case 'strong': {
-        this.firstSectionClass = "green";
-        this.secondSectionClass = "green";
-        this.thirdSectionClass = "green";
-        break;
-      }
-    }
+    return (colorScheme[sectionNumber][passwordStatus]);
   }
 }
